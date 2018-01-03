@@ -69,6 +69,7 @@ The action space in the pddlworld environment is a tuple:
 `(clause, action_index, proposition_index, new_value )`
 
 `clause` is a binary value
+
 * 0 => Target the `preconditions`
 * 1 => Target the `effects`
 
@@ -77,6 +78,7 @@ The action space in the pddlworld environment is a tuple:
 `proposition_index` indicates which proposition should be updated
 
 `new_value` indicates the value that the triplet should take on. Possible options are:
+
 * 0 => 100
 * 1 => 010
 * 2 => 001
@@ -96,3 +98,4 @@ The starting state will be a pddl domain where the actions have no preconditions
 ## Reward
 
 ## Episode Termination
+
