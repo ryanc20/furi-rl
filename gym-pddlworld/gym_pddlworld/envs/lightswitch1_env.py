@@ -1,4 +1,3 @@
-import gym_gridworld
 from gym import Env
 from gym import error, spaces
 
@@ -21,7 +20,7 @@ PROPS = ['switch1_on', 'lightbulb_on']
 
 class LsLiteEnv(Env):
 	def __init__(self):
-	
+		self.state = None
 	'''
 	Performs the input action and returns the resulting state, reward
 	Input: action
@@ -47,13 +46,13 @@ class LsLiteEnv(Env):
 		new_clause_val = set_bit(target_clause, triplet_index + 1, 0)
 		new_clause_val = set_bit(target_clause, triplet_index + 2, 0)
 
-		if val = 0:
+		if val == 0:
 			# Change triplet to 100
 			new_clause_val = set_bit(target_clause, triplet_index + 2, 1)
-		elif val = 1:
+		elif val == 1:
 			# Change triplet to 010
 			new_clause_val = set_bit(target_clause, triplet_index + 1, 1)
-		else
+		else:
 			# Change triplet to 001
 			new_clause_val = set_bit(target_clause, triplet_index, 1)
 
@@ -70,6 +69,7 @@ class LsLiteEnv(Env):
 	def _reset(self):
 		prop_clear = int('010010010010', 2)
 		self.state = (prop_clear, prop_clear)
+		self._render()
 
 	'''
 	Returns the current state
@@ -81,12 +81,14 @@ class LsLiteEnv(Env):
 	Prints the current domain model
 	'''
 	def _render(self, mode='human', close = False):
-
+		pre, eff = self.state
+		print("Preconditions: " + str(pre))
+		print("Effects: " + str(eff))
 	'''
 	Returns a list of possible actions based on current state
-	'''
+	
 	def getLegalActions(self):
-
+	'''
 	@property
 	def observation_space(self):
 		# (preconditions, effects)
