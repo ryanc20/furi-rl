@@ -1,0 +1,72 @@
+\documentclass{article}
+\usepackage{parskip}
+\setlength{\parindent}{15pt}
+\usepackage[margin=1in]{geometry}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\input{PDDL}
+
+\begin{document}
+\today
+
+\section*{Problem Formulation}
+The metalevel search space:
+The MDP $<S, A, T, R, s, t>$
+\begin{itemize}
+\item A set of states $s \in S$. 
+\item A set of actions $a \in A$.
+\item A transition function $T(s,a,s')$.
+\item A reward function $R(s)$.
+\item A start state $s$.
+\item A terminal state $t$.
+\end{itemize}
+
+The state: A state $s$ is an object model consists of a grounded PDDL domain model $<P, A>$. 
+\begin{itemize} 
+\item A set of propositions $P$.
+\item A set of actions $a^{PRE}_{EFF} \in A$.
+\item Each action $a^p_e$ has a set $PRE$ of preconditions and a set $EFF$ of effects. 
+\end{itemize}
+
+
+Working Domain:
+\begin{lstlisting}[caption={LightSwitch Domain},
+  label={lst:pddlmove},
+  language=PDDL]
+:predicates(
+	(switch1_on)
+	(lightbulb_on)
+)
+
+(:action switchon_sw1
+	:parameters ()
+	:precondition (and (not (switch1_on)))
+	:effect (and (switch1_on) (lightbulb_on))
+)
+
+(:action switchoff_sw1
+	:parameters ()
+	:precondition (and (switch1_on))
+	:effect(and (not (switch1_on)) (not (lightbulb_on))
+)
+\end{lstlisting}
+
+\pagebreak
+\section*{State Metaspace Analysis}
+Let $p$ be the number of predicates, $a$ be the number of actions. 
+
+Each action has a set $PRE$ and $EFF$ of propositions. For each proposition, there are three possible values that it can take on in a concrete instance of the model:
+\begin{itemize}
+\item The proposition can belong to clause as a positive literal.
+\item The proposition can belong to a clause as a negative literal.
+\item The proposition can not belong to the clause. 
+\end{itemize}
+Thus, for each action, there are $3^{2p}$ possibilities. For all $a$ actions, there are $\prod_1^a 3^{2p} = (3^{2p})^a = 3^{2ap}$ possibilities.
+
+For the example domain,we have $p=2$ predicates and $a=2$ actions and $3^{2ap} = 3^{2*2*2} = 3^8 = 6561$ possible domain models.
+
+\section*{Action Metaspace Analysis}
+Let $p$ be the number of predicates, $a$ be the number of actions. Given a metastate $s$ in the metaspace $S$, each proposition can be changed to one of the other two possibile values. Thus, there are $4ap$ metaactions.
+\end{document} 
