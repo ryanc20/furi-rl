@@ -33,7 +33,7 @@ class LsLiteEnv(Env):
 		reward = 0
 
 		target_clause = pre
-		if(clause):
+		if clause:
 			target_clause = eff
 
 		# Calculate starting index for triplet
@@ -43,25 +43,24 @@ class LsLiteEnv(Env):
 		
 		# Change bits for target triplet to 000
 		new_clause_val = set_bit(target_clause, triplet_index, 0)
-		new_clause_val = set_bit(target_clause, triplet_index + 1, 0)
-		new_clause_val = set_bit(target_clause, triplet_index + 2, 0)
+		new_clause_val = set_bit(new_clause_val, triplet_index + 1, 0)
+		new_clause_val = set_bit(new_clause_val, triplet_index + 2, 0)
 
 		if val == 0:
 			# Change triplet to 100
-			new_clause_val = set_bit(target_clause, triplet_index + 2, 1)
+			new_clause_val = set_bit(new_clause_val, triplet_index + 2, 1)
 		elif val == 1:
 			# Change triplet to 010
-			new_clause_val = set_bit(target_clause, triplet_index + 1, 1)
+			new_clause_val = set_bit(new_clause_val, triplet_index + 1, 1)
 		else:
 			# Change triplet to 001
-			new_clause_val = set_bit(target_clause, triplet_index, 1)
-
-		if(clause):
-			self.state = (pre, new_clause_val)
-		else:
+			new_clause_val = set_bit(new_clause_val, triplet_index, 1)
+		if clause == 0:
 			self.state = (new_clause_val, eff)
+		else:
+			self.state = (pre, new_clause_val)
 
-		return self._get_obs, done, reward, {}
+		return self._get_obs(), done, reward, {}
 
 	'''
 	Resets the environment to the starting state
