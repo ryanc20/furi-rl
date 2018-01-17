@@ -1,6 +1,6 @@
 from gym import Env
 from gym import error, spaces
-
+from src.ModelSpaceTools import ModelSpaceTool
 '''
 ENVIRONMENT
 
@@ -20,6 +20,7 @@ PROPS = ['switch1_on', 'lightbulb_on']
 
 class LsLiteEnv(Env):
 	def __init__(self):
+		self.mt = ModelSpaceTool(args.domain_model, args.problem, args.domain_templ, args.prob_templ, args.prop_list)
 		self.state = None
 	'''
 	Performs the input action and returns the resulting state, reward
