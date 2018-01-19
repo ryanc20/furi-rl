@@ -40,7 +40,7 @@ class LsLiteEnv(Env):
 		action_start = 3 * len(PROPS) * act
 		prop_start = 3 * prop
 		triplet_index = action_start + prop_start
-		
+
 		# Change bits for target triplet to 000
 		new_clause_val = set_bit(target_clause, triplet_index, 0)
 		new_clause_val = set_bit(new_clause_val, triplet_index + 1, 0)
@@ -85,7 +85,7 @@ class LsLiteEnv(Env):
 		print("Effects: " + str(eff))
 	'''
 	Returns a list of possible actions based on current state
-	
+
 	def getLegalActions(self):
 	'''
 	@property
@@ -99,6 +99,56 @@ class LsLiteEnv(Env):
 	def action_space(self):
 		return spaces.Tuple(spaces.Discrete(2), spaces.Discrete(2), spaces.Discrete(2), spaces.Discrete(3))
 
+	def parse_input(self, input, clause):
+	    """
+	    Parsing the (3 * n) bit input, based on the binary values.
+
+	    100 - Proposition exists in the positive form
+	    010 - Proposition is not present
+	    001 - Proposition exists in the negative form
+
+	    pre is a binary value of 0 or 1 indicating whether it is a precondition or effect
+	    0 = precondition
+	    1 = effect
+
+	    Tests 2 predicates per action AKA 6 bits of the input binary.
+	    The last actions potential predicates will be tested by the first 6 bits of the input binary.
+	    """
+	    accepted_relations = [] #List that stores the actions that are accepted
+	    total_actions = int(len(input) / 6) #Each action has 6 binary values for the propositions tested
+	    action_index = total_actions - 1 #index starts at 0, so subtract 1 from the total_actions
+	    for i in range(0, len(input)):
+	        if i % 6 == 0 and i != 0: #Updates the action_index for every 6 binary values
+	            action_index -= 1
+	        if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
+	            if clause == 0:
+	                if input[i: i + 3] == "100":
+	                    action = ACTS[action_index] + "_has_precondition_pos_" + PROPS[action_index]
+	                    #print(action)
+	                    accepted_relations.append(action)
+
+	                elif input[i: i + 3] == "001":
+	                    action = ACTS[action_index] + "_has_precondition_neg_" + PROPS[action_index]
+	                    #print(action)
+	                    accepted_relations.append(action)
+	                else:
+	                    print(PROPS[action_index] + " was NOT an accepted precondition for the action " + ACTS[action_index])
+	            else:
+	                if input[i: i + 3] == "100":
+	                    action = ACTS[action_index] + "_has_effect_pos_" + PROPS[action_index]
+	                    #print(action)
+	                    accepted_relations.append(action)
+
+	                elif input[i: i + 3] == "001":
+	                    action = ACTS[action_index] + "_has_effect_neg_" + PROPS[action_index]
+	                    #print(action)
+	                    accepted_relations.append(action)
+	                else:
+	                    print(PROPS[action_index] + " was NOT an accepted effect for the action " + ACTS[action_index])
+	    #Prints out the list of accepted relations
+	    #print("ACCEPTED ACTIONS: ")
+	    #for i in range(0, len(accepted)):
+	    	#print(accepted_relations[i])
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""
 	mask = 1 << index
