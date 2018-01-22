@@ -27,11 +27,8 @@ class LsLiteEnv(Env):
 	def __init__(self):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		print("INITIALIAZING WITH PDDL")
-<<<<<<< HEAD
 		self.ACTS = self.mt.action_list
 		self.PROPS = self.mt.proposition_set
-=======
->>>>>>> 4db95f1ae51eee421defee92c7177138cc13d823
 		print(self.mt.proposition_set)
 		print(self.mt.action_list)
 		print("END OF INITIALIZATION")
