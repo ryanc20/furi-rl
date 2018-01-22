@@ -1,6 +1,6 @@
 from gym import Env
 from gym import error, spaces
-
+from gym_pddlworld.envs.ModelSpaceTools import ModelSpaceTool
 '''
 ENVIRONMENT
 
@@ -18,8 +18,18 @@ EPISODE TERMINATION
 ACTS = ['switchon_sw1', 'switchoff_sw1']
 PROPS = ['switch1_on', 'lightbulb_on']
 
+DOMAIN_MOD = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain.pddl'
+PROB = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob.pddl'
+DOM_TEMPL = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain_temp.pddl'
+PROB_TEMPL = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob_templ.pddl'
+PROP_LIST = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prop_list'
 class LsLiteEnv(Env):
 	def __init__(self):
+		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
+		print("INITIALIAZING WITH PDDL")
+		print(self.mt.proposition_set)
+		print(self.mt.action_list)
+		print("END OF INITIALIZATION")
 		self.state = None
 	'''
 	Performs the input action and returns the resulting state, reward
@@ -81,8 +91,8 @@ class LsLiteEnv(Env):
 	'''
 	def _render(self, mode='human', close = False):
 		pre, eff = self.state
-		print("Preconditions: " + str(pre))
-		print("Effects: " + str(eff))
+		print("Preconditions:", format(pre, "12b"))
+		print("Effects:", format(eff, "12b"))
 	'''
 	Returns a list of possible actions based on current state
 
