@@ -27,6 +27,11 @@ class LsLiteEnv(Env):
 	def __init__(self):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		print("INITIALIAZING WITH PDDL")
+<<<<<<< HEAD
+		self.ACTS = self.mt.action_list
+		self.PROPS = self.mt.proposition_set
+=======
+>>>>>>> 4db95f1ae51eee421defee92c7177138cc13d823
 		print(self.mt.proposition_set)
 		print(self.mt.action_list)
 		print("END OF INITIALIZATION")
@@ -85,14 +90,6 @@ class LsLiteEnv(Env):
 	'''
 	def _get_obs(self):
 		return self.state
-
-	'''
-	Prints the current domain model
-	'''
-	def _render(self, mode='human', close = False):
-		pre, eff = self.state
-		print("Preconditions:", format(pre, "12b"))
-		print("Effects:", format(eff, "12b"))
 	'''
 	Returns a list of possible actions based on current state
 
@@ -156,9 +153,20 @@ class LsLiteEnv(Env):
 	                else:
 	                    print(PROPS[action_index] + " was NOT an accepted effect for the action " + ACTS[action_index])
 	    #Prints out the list of accepted relations
-	    #print("ACCEPTED ACTIONS: ")
-	    #for i in range(0, len(accepted)):
-	    	#print(accepted_relations[i])
+	    print("ACCEPTED ACTIONS: ")
+	    for i in range(0, len(accepted_relations)):
+	    	print(accepted_relations[i])
+
+
+	'''
+	Prints the current domain model
+	'''
+	def _render(self, mode='human', close = False):
+		pre, eff = self.state
+		self.parse_input(format(pre,"b").zfill(12), 0)
+		print("Preconditions:", format(pre, "b").zfill(12))
+		print("Effects:", format(eff, "b").zfill(12))
+
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""
 	mask = 1 << index
