@@ -5,7 +5,6 @@
 (:objects )
 
 (:init
-(switch1_on)
 )
 
 
