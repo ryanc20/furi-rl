@@ -157,8 +157,6 @@ class LsLiteEnv(Env):
 		print("ACCEPTED ACTIONS: ")
 		for i in range(0, len(accepted_relations)):
 			print(accepted_relations[i])
-
-
 	'''
 	Prints the current domain model
 	'''
