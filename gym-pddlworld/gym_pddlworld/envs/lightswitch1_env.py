@@ -27,11 +27,8 @@ class LsLiteEnv(Env):
 	def __init__(self):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		print("INITIALIAZING WITH PDDL")
-<<<<<<< HEAD
 		self.ACTS = self.mt.action_list
 		self.PROPS = self.mt.proposition_set
-=======
->>>>>>> 4db95f1ae51eee421defee92c7177138cc13d823
 		print(self.mt.proposition_set)
 		print(self.mt.action_list)
 		print("END OF INITIALIZATION")
@@ -107,55 +104,59 @@ class LsLiteEnv(Env):
 		return spaces.Tuple(spaces.Discrete(2), spaces.Discrete(2), spaces.Discrete(2), spaces.Discrete(3))
 
 	def parse_input(self, input, clause):
-	    """
-	    Parsing the (3 * n) bit input, based on the binary values.
+		"""
+		Parsing the (3 * n) bit input, based on the binary values.
 
-	    100 - Proposition exists in the positive form
-	    010 - Proposition is not present
-	    001 - Proposition exists in the negative form
+		100 - Proposition exists in the positive form
+		010 - Proposition is not present
+		001 - Proposition exists in the negative form
 
-	    pre is a binary value of 0 or 1 indicating whether it is a precondition or effect
-	    0 = precondition
-	    1 = effect
+		pre is a binary value of 0 or 1 indicating whether it is a precondition or effect
+		0 = precondition
+		1 = effect
 
-	    Tests 2 predicates per action AKA 6 bits of the input binary.
-	    The last actions potential predicates will be tested by the first 6 bits of the input binary.
-	    """
-	    accepted_relations = [] #List that stores the actions that are accepted
-	    total_actions = int(len(input) / 6) #Each action has 6 binary values for the propositions tested
-	    action_index = total_actions - 1 #index starts at 0, so subtract 1 from the total_actions
-	    for i in range(0, len(input)):
-	        if i % 6 == 0 and i != 0: #Updates the action_index for every 6 binary values
-	            action_index -= 1
-	        if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
-	            if clause == 0:
-	                if input[i: i + 3] == "100":
-	                    action = ACTS[action_index] + "_has_precondition_pos_" + PROPS[action_index]
-	                    #print(action)
-	                    accepted_relations.append(action)
+		Tests 2 predicates per action AKA 6 bits of the input binary.
+		The last actions potential predicates will be tested by the first 6 bits of the input binary.
+		"""
+		accepted_relations = [] #List that stores the actions that are accepted
+		total_actions = int(len(input) / 6) #Each action has 6 binary values for the propositions tested
+		action_index = total_actions - 1 #index starts at 0, so subtract 1 from the total_actions
+		prop_index = 0
+		for i in range(0, len(input)):
+			if i % 6 == 0 and i != 0: #Updates the action_index for every 6 binary values
+				action_index -= 1
+				prop_index = 0
+			if i % 3 == 0 and i != 0:
+				prop_index += 1
+			if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
+				if clause == 0:
+					if input[i: i + 3] == "100":
+						action = ACTS[action_index] + "_has_precondition_pos_" + PROPS[action_index]
+						#print(action)
+						accepted_relations.append(action)
 
-	                elif input[i: i + 3] == "001":
-	                    action = ACTS[action_index] + "_has_precondition_neg_" + PROPS[action_index]
-	                    #print(action)
-	                    accepted_relations.append(action)
-	                else:
-	                    print(PROPS[action_index] + " was NOT an accepted precondition for the action " + ACTS[action_index])
-	            else:
-	                if input[i: i + 3] == "100":
-	                    action = ACTS[action_index] + "_has_effect_pos_" + PROPS[action_index]
-	                    #print(action)
-	                    accepted_relations.append(action)
+					elif input[i: i + 3] == "001":
+						action = ACTS[action_index] + "_has_precondition_neg_" + PROPS[action_index]
+						#print(action)
+						accepted_relations.append(action)
+					else:
+						print(PROPS[action_index] + " was NOT an accepted precondition for the action " + ACTS[action_index])
+				else:
+					if input[i: i + 3] == "100":
+						action = ACTS[action_index] + "_has_effect_pos_" + PROPS[action_index]
+						#print(action)
+						accepted_relations.append(action)
 
-	                elif input[i: i + 3] == "001":
-	                    action = ACTS[action_index] + "_has_effect_neg_" + PROPS[action_index]
-	                    #print(action)
-	                    accepted_relations.append(action)
-	                else:
-	                    print(PROPS[action_index] + " was NOT an accepted effect for the action " + ACTS[action_index])
-	    #Prints out the list of accepted relations
-	    print("ACCEPTED ACTIONS: ")
-	    for i in range(0, len(accepted_relations)):
-	    	print(accepted_relations[i])
+					elif input[i: i + 3] == "001":
+						action = ACTS[action_index] + "_has_effect_neg_" + PROPS[action_index]
+						#print(action)
+						accepted_relations.append(action)
+					else:
+						print(PROPS[action_index] + " was NOT an accepted effect for the action " + ACTS[action_index])
+		#Prints out the list of accepted relations
+		print("ACCEPTED ACTIONS: ")
+		for i in range(0, len(accepted_relations)):
+			print(accepted_relations[i])
 
 
 	'''
