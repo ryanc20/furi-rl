@@ -14,24 +14,8 @@ START STATE
 
 EPISODE TERMINATION
 '''
-
-ACTS = ['switchon_sw1', 'switchoff_sw1']
-PROPS = ['switch1_on', 'lightbulb_on']
-
-DOMAIN_MOD = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain.pddl'
-PROB = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob.pddl'
-DOM_TEMPL = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain_temp.pddl'
-PROB_TEMPL = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob_templ.pddl'
-PROP_LIST = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prop_list'
 class LsLiteEnv(Env):
 	def __init__(self):
-		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
-		print("INITIALIAZING WITH PDDL")
-		self.ACTS = self.mt.action_list
-		self.PROPS = self.mt.proposition_set
-		print(self.mt.proposition_set)
-		print(self.mt.action_list)
-		print("END OF INITIALIZATION")
 		self.state = None
 	'''
 	Performs the input action and returns the resulting state, reward
@@ -49,7 +33,7 @@ class LsLiteEnv(Env):
 			target_clause = eff
 
 		# Calculate starting index for triplet
-		action_start = 3 * len(PROPS) * act
+		action_start = 3 * len(self.PROPS) * act
 		prop_start = 3 * prop
 		triplet_index = action_start + prop_start
 
@@ -74,11 +58,26 @@ class LsLiteEnv(Env):
 
 		return self._get_obs(), done, reward, {}
 
+	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
+		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
+		print("INITIALIAZING WITH PDDL")
+		self.ACTS = self.mt.action_list
+		self.PROPS = list(self.mt.proposition_set)
+		for index in range(len(self.PROPS)):
+			self.PROPS[index] = self.PROPS[index].strip("()")
+		print("Actions: ", self.ACTS)
+		print("Propositions: ", self.PROPS)
+		print("END OF INITIALIZATION")
+
 	'''
 	Resets the environment to the starting state
 	'''
 	def _reset(self):
-		prop_clear = int('010010010010', 2)
+		prop_clear = ''
+		for i in range(len(self.ACTS)):
+			for j in range(len(self.PROPS)):
+				prop_clear += '010'
+		prop_clear = int(prop_clear, 2)
 		self.state = (prop_clear, prop_clear)
 		self._render()
 
@@ -119,52 +118,56 @@ class LsLiteEnv(Env):
 		The last actions potential predicates will be tested by the first 6 bits of the input binary.
 		"""
 		accepted_relations = [] #List that stores the actions that are accepted
-		total_actions = int(len(input) / 6) #Each action has 6 binary values for the propositions tested
+		action_length = 3 * len(self.PROPS)
+		total_actions = int(len(input) / action_length) #Each action has 6 binary values for the propositions tested
 		action_index = total_actions - 1 #index starts at 0, so subtract 1 from the total_actions
-		prop_index = 0
+		prop_index = len(self.PROPS) - 1
 		for i in range(0, len(input)):
-			if i % 6 == 0 and i != 0: #Updates the action_index for every 6 binary values
+			if i % action_length == 0 and i != 0: #Updates the action_index for every 6 binary values
 				action_index -= 1
-				prop_index = 0
-			if i % 3 == 0 and i != 0:
-				prop_index += 1
+				prop_index = len(self.PROPS) - 1
+			if i % 3 == 0 and i%6 != 0 and i != 0:
+				prop_index -= 1
 			if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
 				if clause == 0:
 					if input[i: i + 3] == "100":
-						action = ACTS[action_index] + "_has_precondition_pos_" + PROPS[action_index]
+						action = self.ACTS[action_index] + "_has_precondition_pos_" + self.PROPS[action_index]
 						#print(action)
 						accepted_relations.append(action)
 
 					elif input[i: i + 3] == "001":
-						action = ACTS[action_index] + "_has_precondition_neg_" + PROPS[action_index]
+						action = self.ACTS[action_index] + "_has_precondition_neg_" + self.PROPS[prop_index]
 						#print(action)
 						accepted_relations.append(action)
 					else:
-						print(PROPS[action_index] + " was NOT an accepted precondition for the action " + ACTS[action_index])
+						print(self.PROPS[prop_index] + " was NOT an accepted precondition for the action " + self.ACTS[action_index])
 				else:
 					if input[i: i + 3] == "100":
-						action = ACTS[action_index] + "_has_effect_pos_" + PROPS[action_index]
+						action = self.ACTS[action_index] + "_has_effect_pos_" + self.PROPS[prop_index]
 						#print(action)
 						accepted_relations.append(action)
 
 					elif input[i: i + 3] == "001":
-						action = ACTS[action_index] + "_has_effect_neg_" + PROPS[action_index]
+						action = self.ACTS[action_index] + "_has_effect_neg_" + self.PROPS[prop_index]
 						#print(action)
 						accepted_relations.append(action)
 					else:
-						print(PROPS[action_index] + " was NOT an accepted effect for the action " + ACTS[action_index])
+						print(self.PROPS[prop_index] + " was NOT an accepted effect for the action " + self.ACTS[action_index])
 		#Prints out the list of accepted relations
 		print("ACCEPTED ACTIONS: ")
 		for i in range(0, len(accepted_relations)):
 			print(accepted_relations[i])
+
+
 	'''
 	Prints the current domain model
 	'''
 	def _render(self, mode='human', close = False):
 		pre, eff = self.state
-		self.parse_input(format(pre,"b").zfill(12), 0)
-		print("Preconditions:", format(pre, "b").zfill(12))
-		print("Effects:", format(eff, "b").zfill(12))
+		str_length = 3*len(self.PROPS) * len(self.ACTS)
+		self.parse_input(format(pre,"b").zfill(str_length), 0)
+		print("Preconditions:", format(pre, "b").zfill(str_length))
+		print("Effects:", format(eff, "b").zfill(str_length))
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""
