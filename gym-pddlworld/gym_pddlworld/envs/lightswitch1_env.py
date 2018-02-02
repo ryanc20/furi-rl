@@ -71,7 +71,7 @@ class LsLiteEnv(Env):
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
-		print("##INITIALIAZING PDDL")
+		print("##INITIALIAZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
 		for index in range(len(self.PROPS)):
@@ -91,8 +91,7 @@ class LsLiteEnv(Env):
 			for j in range(len(self.PROPS)):
 				prop_clear += '010'
 		prop_clear = int(prop_clear, 2)
-		self.state = (
-			prop_clear, prop_clear)
+		self.state = (prop_clear, prop_clear)
 		self._render()
 
 	'''
