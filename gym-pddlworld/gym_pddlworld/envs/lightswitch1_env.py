@@ -17,6 +17,7 @@ EPISODE TERMINATION
 class LsLiteEnv(Env):
 	def __init__(self):
 		self.state = None
+		self.observation_space = spaces.Tuple((int, int))
 	'''
 	Performs the input action and returns the resulting state, reward
 	Input: action
@@ -56,18 +57,30 @@ class LsLiteEnv(Env):
 		else:
 			self.state = (pre, new_clause_val)
 
+		pre, eff = self.state
+		str_length = 3*len(self.PROPS) * len(self.ACTS)
+		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
+		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
+
+		valid_plan = self.mt.find_plan_and_test(accepted_relations)
+		print("Valid Plan Found: ", valid_plan)
+		if valid_plan:
+			reward = 10
+
 		return self._get_obs(), done, reward, {}
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
-		print("INITIALIAZING WITH PDDL")
+		print("##INITIALIAZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
+
+		self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
 		print("Actions: ", self.ACTS)
 		print("Propositions: ", self.PROPS)
-		print("END OF INITIALIZATION")
+		print("##END OF INITIALIZATION")
 
 	'''
 	Resets the environment to the starting state
@@ -91,17 +104,7 @@ class LsLiteEnv(Env):
 
 	def getLegalActions(self):
 	'''
-	@property
-	def observation_space(self):
-		# (preconditions, effects)
-		# Elements in the tuple are binary values that represent state
-		# 010010010010 => 010 010 010 010
-		return spaces.Tuple(int, int)
-
-	@property
-	def action_space(self):
-		return spaces.Tuple(spaces.Discrete(2), spaces.Discrete(2), spaces.Discrete(2), spaces.Discrete(3))
-
+	
 	def parse_input(self, input, clause):
 		"""
 		Parsing the (3 * n) bit input, based on the binary values.
@@ -113,9 +116,6 @@ class LsLiteEnv(Env):
 		pre is a binary value of 0 or 1 indicating whether it is a precondition or effect
 		0 = precondition
 		1 = effect
-
-		Tests 2 predicates per action AKA 6 bits of the input binary.
-		The last actions potential predicates will be tested by the first 6 bits of the input binary.
 		"""
 		accepted_relations = [] #List that stores the actions that are accepted
 		action_length = 3 * len(self.PROPS)
@@ -126,7 +126,7 @@ class LsLiteEnv(Env):
 			if i % action_length == 0 and i != 0: #Updates the action_index for every 6 binary values
 				action_index -= 1
 				prop_index = len(self.PROPS) - 1
-			if i % 3 == 0 and i%6 != 0 and i != 0:
+			if i % 3 == 0 and i % action_length != 0 and i != 0:
 				prop_index -= 1
 			if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
 				if clause == 0:
@@ -139,8 +139,8 @@ class LsLiteEnv(Env):
 						action = self.ACTS[action_index] + "_has_precondition_neg_" + self.PROPS[prop_index]
 						#print(action)
 						accepted_relations.append(action)
-					else:
-						print(self.PROPS[prop_index] + " was NOT an accepted precondition for the action " + self.ACTS[action_index])
+					#else:
+						#print(self.PROPS[prop_index] + " was NOT an accepted precondition for the action " + self.ACTS[action_index])
 				else:
 					if input[i: i + 3] == "100":
 						action = self.ACTS[action_index] + "_has_effect_pos_" + self.PROPS[prop_index]
@@ -151,13 +151,16 @@ class LsLiteEnv(Env):
 						action = self.ACTS[action_index] + "_has_effect_neg_" + self.PROPS[prop_index]
 						#print(action)
 						accepted_relations.append(action)
-					else:
-						print(self.PROPS[prop_index] + " was NOT an accepted effect for the action " + self.ACTS[action_index])
-		#Prints out the list of accepted relations
-		print("ACCEPTED ACTIONS: ")
-		for i in range(0, len(accepted_relations)):
-			print(accepted_relations[i])
+					#else:
 
+						#print(self.PROPS[prop_index] + " was NOT an accepted effect for the action " + self.ACTS[action_index])
+		#Prints out the list of accepted relations
+		#print("ACCEPTED ACTIONS: ")
+		#for i in range(0, len(accepted_relations)):
+		#	print(accepted_relations[i])
+		
+		## Return the accepted relations
+		return accepted_relations
 
 	'''
 	Prints the current domain model
@@ -165,9 +168,11 @@ class LsLiteEnv(Env):
 	def _render(self, mode='human', close = False):
 		pre, eff = self.state
 		str_length = 3*len(self.PROPS) * len(self.ACTS)
-		self.parse_input(format(pre,"b").zfill(str_length), 0)
-		print("Preconditions:", format(pre, "b").zfill(str_length))
-		print("Effects:", format(eff, "b").zfill(str_length))
+		props = self.parse_input(format(pre,"b").zfill(str_length), 0)
+		props += self.parse_input(format(eff,"b").zfill(str_length), 0)
+		#print("Pre: ", format(pre,"b").zfill(str_length))
+		#print("Eff: ", format(eff,"b").zfill(str_length))
+		print("Accepted relations: ", props)
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""

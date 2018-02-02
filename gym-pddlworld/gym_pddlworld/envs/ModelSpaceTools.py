@@ -9,9 +9,9 @@ import numpy
 import itertools
 
 OPERATOR_DEFN_KEYS = ['precondition_pos','precondition_neg', 'effect_pos', 'effect_neg']
-PLANNER_COMMAND = './fdplan.sh {} {}'
+PLANNER_COMMAND = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/fdplan.sh {} {}'
 ACTION_DEF_STR = '(:action {}\n:parameters ()\n:precondition\n(and\n{}\n)\n:effect\n(and\n{}\n)\n)\n'
-VAL_PLAN_CMD  = "./valplan.sh {} {} {}"
+VAL_PLAN_CMD  = "/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/valplan.sh {} {} {}"
 
 class ModelSpaceTool:
     def __init__(self, domain_model, problem, dom_templ, prob_templ, proposition_list_file):
