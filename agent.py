@@ -23,7 +23,5 @@ else:
 env = gym.make('lslite-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 env.reset()
-state, reward, done, log = env.step((0,0,1,2))
-pre, eff = state
-print("Pre:", format(pre, "b"))
-print("Eff:", format(eff, "b"))
+env.step((0,0,0,2))
+
