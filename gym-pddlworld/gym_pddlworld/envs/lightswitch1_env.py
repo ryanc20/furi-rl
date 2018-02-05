@@ -95,7 +95,7 @@ class LsLiteEnv(Env):
 				prop_clear += '010'
 		prop_clear = int(prop_clear, 2)
 		self.state = (prop_clear, prop_clear)
-		self._render()
+		return self.state
 
 	'''
 	Returns the current state
@@ -176,6 +176,41 @@ class LsLiteEnv(Env):
 		#print("Pre: ", format(pre,"b").zfill(str_length))
 		#print("Eff: ", format(eff,"b").zfill(str_length))
 		print("Accepted relations: ", props)
+	
+	def getLegalActions(self, state):
+		legal_actions = list()
+		pre, eff = state
+		str_length = 3*len(self.PROPS) * len(self.ACTS)
+		legal_actions += self.parseLegalActions(format(pre,"b").zfill(str_length), 0)
+		legal_actions += self.parseLegalActions(format(eff,"b").zfill(str_length), 1)
+		return legal_actions
+
+	def parseLegalActions(self, input, clause):
+		legal_actions = list()
+		action_length = 3 * len(self.PROPS)
+		total_actions = len(self.ACTS)
+		action_index = total_actions - 1
+		prop_index = len(self.PROPS) - 1
+
+		for i in range(0, len(input)):
+			if i % action_length == 0 and i != 0: #Updates the action_index for every 6 binary values
+				action_index -= 1
+				prop_index = len(self.PROPS) - 1
+			if i % 3 == 0 and i % action_length != 0 and i != 0:
+				prop_index -= 1
+			if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
+				if input[i: i + 3] == "100":
+					legal_actions.append((clause, action_index, prop_index, 1))
+					legal_actions.append((clause, action_index, prop_index, 2))
+
+				elif input[i: i + 3] == "001":
+					legal_actions.append((clause, action_index, prop_index, 0))
+					legal_actions.append((clause, action_index, prop_index, 1))
+				elif input[i: i + 3] == "010":
+					legal_actions.append((clause, action_index, prop_index, 0))
+					legal_actions.append((clause, action_index, prop_index, 2))
+
+		return legal_actions
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""
