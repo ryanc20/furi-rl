@@ -25,10 +25,6 @@ else:
 
 env = gym.make('lslite-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
-<<<<<<< HEAD
 state = env.reset()
 print(state)
 print(env.getLegalActions(state))
-=======
-env.reset()
->>>>>>> 3510cdac826628c305ba221bcedff20b5cf942c4
