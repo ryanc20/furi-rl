@@ -63,11 +63,12 @@ class LsLiteEnv(Env):
 		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
 
 		valid_plan = self.mt.find_plan_and_test(accepted_relations)
-		print("Valid Plan Found: ", valid_plan)
+		#print("Valid Plan Found: ", valid_plan)
 		if valid_plan:
 			reward = 10
+			done = True
 
-		return self._get_obs(), done, reward, {}
+		return self._get_obs(), reward, done, {}
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
@@ -80,6 +81,8 @@ class LsLiteEnv(Env):
 		self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
 		print("Actions: ", self.ACTS)
 		print("Propositions: ", self.PROPS)
+		print("Goals: ", self.mt.dom_prob.goals())
+		print("Init State: ", self.mt.dom_prob.initialstate())
 		print("##END OF INITIALIZATION")
 
 	'''
@@ -169,7 +172,7 @@ class LsLiteEnv(Env):
 		pre, eff = self.state
 		str_length = 3*len(self.PROPS) * len(self.ACTS)
 		props = self.parse_input(format(pre,"b").zfill(str_length), 0)
-		props += self.parse_input(format(eff,"b").zfill(str_length), 0)
+		props += self.parse_input(format(eff,"b").zfill(str_length), 1)
 		#print("Pre: ", format(pre,"b").zfill(str_length))
 		#print("Eff: ", format(eff,"b").zfill(str_length))
 		print("Accepted relations: ", props)

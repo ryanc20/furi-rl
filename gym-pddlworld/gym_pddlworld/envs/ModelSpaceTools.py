@@ -8,13 +8,17 @@ import copy
 import numpy
 import itertools
 
+RL_DIR = os.environ.get('RL_DIR')
+
 OPERATOR_DEFN_KEYS = ['precondition_pos','precondition_neg', 'effect_pos', 'effect_neg']
-PLANNER_COMMAND = '/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/fdplan.sh {} {}'
+PLANNER_COMMAND = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/fdplan.sh {} {}'
 ACTION_DEF_STR = '(:action {}\n:parameters ()\n:precondition\n(and\n{}\n)\n:effect\n(and\n{}\n)\n)\n'
-VAL_PLAN_CMD  = "/home/perry/Documents/Research/furi-rl/gym-pddlworld/gym_pddlworld/envs/valplan.sh {} {} {}"
+VAL_PLAN_CMD  = RL_DIR + "furi-rl/gym-pddlworld/gym_pddlworld/envs/valplan.sh {} {} {}"
 
 class ModelSpaceTool:
     def __init__(self, domain_model, problem, dom_templ, prob_templ, proposition_list_file):
+        self.original_domain_file = domain_model
+        self.original_problem_file = problem
         self.dom_prob = pddlpy.DomainProblem(domain_model, problem)
         self.domain_template_file = dom_templ
         self.prob_template_file = prob_templ
@@ -112,10 +116,13 @@ class ModelSpaceTool:
 
 
         self.goal_state = ['('+i+')' for i in self.convert_prop_tuple_list(self.dom_prob.goals())]
-        self.init_state = ['('+i+')' for i in self.convert_prop_tuple_list(self.dom_prob.initialstate())]
+        if len(self.dom_prob.initialstate()) == 0:
+            self.init_state = [' ']
+        else:
+            self.init_state = ['('+i+')' for i in self.convert_prop_tuple_list(self.dom_prob.initialstate())]
 
         prob_str = self.prob_template_str.format("\n".join(self.init_state), "\n".join(self.goal_state))
-
+        
         with open(dom_dest, 'w') as d_fd:
             d_fd.write(dom_str)
         with open(prob_dest, 'w') as p_fd:
@@ -129,13 +136,13 @@ class ModelSpaceTool:
         tmp_plan = "/tmp/plan.sol"
         self.create_domain_file(meta_state, tmp_domain, tmp_problem)
         plan_lst = ['('+i.strip()+')' for i in os.popen(PLANNER_COMMAND.format(tmp_domain, tmp_problem)).read().strip().split('\n')]
-        print (plan_lst)
+        #print (plan_lst)
         if len(plan_lst) < 0:
             # You can return a false here if you are sure you wont have empty plans
             pass
         with open(tmp_plan, 'w') as p_fd:
             p_fd.write("\n".join(plan_lst))
-        v_out = os.popen(VAL_PLAN_CMD.format(tmp_domain, tmp_problem, tmp_plan)).read().strip()
+        v_out = os.popen(VAL_PLAN_CMD.format(self.original_domain_file, self.original_problem_file, tmp_plan)).read().strip()
         return eval(v_out)
 
 
