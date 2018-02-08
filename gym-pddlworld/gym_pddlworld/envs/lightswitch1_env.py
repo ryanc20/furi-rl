@@ -134,7 +134,7 @@ class LsLiteEnv(Env):
 			if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
 				if clause == 0:
 					if input[i: i + 3] == "100":
-						action = self.ACTS[action_index] + "_has_precondition_pos_" + self.PROPS[action_index]
+						action = self.ACTS[action_index] + "_has_precondition_pos_" + self.PROPS[prop_index]
 						#print(action)
 						accepted_relations.append(action)
 
@@ -185,6 +185,7 @@ class LsLiteEnv(Env):
 		legal_actions += self.parseLegalActions(format(eff,"b").zfill(str_length), 1)
 		return legal_actions
 
+
 	def parseLegalActions(self, input, clause):
 		legal_actions = list()
 		action_length = 3 * len(self.PROPS)
@@ -211,6 +212,21 @@ class LsLiteEnv(Env):
 					legal_actions.append((clause, action_index, prop_index, 2))
 
 		return legal_actions
+
+	def serialize(self, state, action):
+		"""
+		Standard format to set for the key of the dictionary.
+			"precond"-"effect"-"clause"-"act"-"prop"-"val"
+		
+		Where "precond" and "effect" come from the action as 2 integers,
+		and "clause", "act", "prop", and "val" are integers from the 4-tuple
+		returns for each legal action in getLegalActions(state).
+		"""
+		state_val = str(state[0]) + "-" + str(state[1])
+		action_val = str(action[0]) + "-" + str(action[1]) + "-" + str(action[2]) + "-" + str(action[3])
+
+		formatted_key = state_val + "-" + action_val 
+		return formatted_key
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""
