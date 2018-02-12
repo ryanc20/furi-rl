@@ -5,7 +5,7 @@
 (:objects )
 
 (:init
-
+        (dummy)
 )
 
 
