@@ -28,6 +28,10 @@ else:
 env = gym.make('lslite-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 state = env.reset()
+<<<<<<< HEAD
+print state
+print env.getLegalActions(state)
+=======
 
 def train(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
     """
@@ -66,3 +70,4 @@ print("Key: ", var)
 state = env.reset()
 train(Q, state, alpha, epsilon, gamma, num_of_episodes, env)
 
+>>>>>>> ryan/master
