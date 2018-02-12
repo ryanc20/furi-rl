@@ -12,7 +12,7 @@ PROP_LIST = ''
 
 RL_DIR = os.environ.get('RL_DIR')
 
-if True:
+if False:
     DOMAIN_MOD = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain.pddl'
     PROB = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob.pddl'
     DOM_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain_temp.pddl'
@@ -54,13 +54,14 @@ def train(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
             Q[current_key] += alpha * (reward + (Q[next_key] - Q[current_key]))
             total_reward += reward
             state = next_state
-    if episode % 10 == 0:
-        print("Episode: {} Total Reward {}".format(episode, total_reward))
+        print(env.parse_input(state))
+        if episode % 10 == 0:
+            print("Episode: {} Total Reward {}".format(episode, total_reward))
 Q = {}
 Q = defaultdict(lambda: 0, Q)
-alpha =.6
-epsilon = .1
-gamma = .9
+alpha =.6       # learning rate
+epsilon = .1    # epsilon-greedy rate
+gamma = .9      # discount factor
 num_of_episodes = 50
 print("State: ", state[0], state[1])
 legal_actions = env.getLegalActions(state) #list of legal actions for the state

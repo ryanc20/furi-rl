@@ -4,6 +4,7 @@
 (:predicates
     (switch1_on)
     (light_bulb_on)
+    (dummy)
 )
 
 {}
