@@ -62,19 +62,31 @@ class LsLiteEnv(Env):
 		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
 		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
 
-		valid_plan = self.mt.find_plan_and_test(accepted_relations)
-		#print("Valid Plan Found: ", valid_plan)
-		if valid_plan:
-			reward = 10
-			done = True
+		##TEST ON PROBLEMS WITH SAME CHALLENGE LEVEL
+		problems = self.problem_set[self.challenge_level - 1]
+		numProbsSolved = 0
+		for problem in problems:
+			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
+			#print("Valid Plan Found: ", valid_plan)
+			if valid_plan:
+				reward = 100 * numProbsSolved
+				done = True
+				numProbsSolved += 1
+			else:
+				reward = -100 * (len(problems) - numProbsSolved)
+		if numProbsSolved == len(problems) and self.challenge_level < self.numLevels:
+			self.challenge_level += 1
 
 		return self._get_obs(), reward, done, {}
 
-	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
+	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		print("##INITIALIAZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
+		self.problem_set = problem_set
+		self.numLevels = len(problem_set)
+		self.challenge_level = 1
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
 
