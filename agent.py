@@ -79,7 +79,8 @@ def epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
             state = next_state
             print(len(Q))
             cutoff_counter += 1
-        print(env.parse_input(state[0], 0))
+        str_length = 3*len(self.PROPS) * len(self.ACTS)
+        print(env.parse_input(format(state[0],"b").zfill(str_length), 0))
         if episode % 10 == 0:
             print("Episode: {} Total Reward {}".format(episode, total_reward))
 
@@ -110,7 +111,8 @@ def train(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
             total_reward += reward
             state = next_state
             print(len(Q))
-        print(env.parse_input(state))
+        str_length = 3*len(self.PROPS) * len(self.ACTS)
+        print(env.parse_input(format(state[0],"b").zfill(str_length), 0))
         if episode % 10 == 0:
             print("Episode: {} Total Reward {}".format(episode, total_reward))
 Q = {}
