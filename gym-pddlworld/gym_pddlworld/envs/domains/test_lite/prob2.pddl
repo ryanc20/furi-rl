@@ -5,13 +5,14 @@
 (:objects )
 
 (:init
-(dummy)
+(lightbulb_on)
+(switch1_on)
 )
 
 
 (:goal
 (and
-(lightbulb_on)
+(not (lightbulb_on))
 )
 )
 
