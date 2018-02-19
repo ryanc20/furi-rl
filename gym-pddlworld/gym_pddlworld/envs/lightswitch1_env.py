@@ -64,15 +64,19 @@ class LsLiteEnv(Env):
 
 		valid_plan = self.mt.find_plan_and_test(accepted_relations)
 		#print("Valid Plan Found: ", valid_plan)
+		print("Testing if plan is valid (will print valid if successful):")
 		if valid_plan:
+			print("Valid plan!")
 			reward = 10
 			done = True
-
+		else: #potential option
+			reward = -1
+		
 		return self._get_obs(), reward, done, {}
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
-		print("##INITIALIAZING WITH PDDL")
+		print("##INITIALIZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
 		for index in range(len(self.PROPS)):
@@ -220,7 +224,7 @@ class LsLiteEnv(Env):
 		
 		Where "precond" and "effect" come from the action as 2 integers,
 		and "clause", "act", "prop", and "val" are integers from the 4-tuple
-		returns for each legal action in getLegalActions(state).
+		from each legal action in getLegalActions(state).
 		"""
 		state_val = str(state[0]) + "-" + str(state[1])
 		action_val = str(action[0]) + "-" + str(action[1]) + "-" + str(action[2]) + "-" + str(action[3])

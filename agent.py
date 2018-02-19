@@ -41,15 +41,21 @@ def train(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
         while done == False:
             legal_actions = env.getLegalActions(state)
             action = random.choice(legal_actions) # picks a random action from the legal actions
-            next_state, reward, done, info = env._step(action)
+
+            next_state, reward, done, info = env._step(action) #step function
+
             current_key = env.serialize(state, action)
             Q[current_key] = reward
+
             next_legal_actions = env.getLegalActions(next_state)
             next_action = random.choice(next_legal_actions)
             next_key = env.serialize(next_state, next_action)
+
             Q[current_key] += alpha * (reward + (Q[next_key] - Q[current_key]))
+
             total_reward += reward
             state = next_state
+            print("Size of Q-table:", len(Q))
     if episode % 10 == 0:
         print("Episode: {} Total Reward {}".format(episode, total_reward))
 Q = {}
