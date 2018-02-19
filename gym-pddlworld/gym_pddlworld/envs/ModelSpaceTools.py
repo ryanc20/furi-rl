@@ -136,8 +136,8 @@ class ModelSpaceTool:
         tmp_plan = "/tmp/plan.sol"
         self.create_domain_file(meta_state, tmp_domain, tmp_problem)
         plan_lst = ['('+i.strip()+')' for i in os.popen(PLANNER_COMMAND.format(tmp_domain, customProblem)).read().strip().split('\n')]
-        print(plan_lst)
-        #print (plan_lst)
+        #print(plan_lst)
+        
         if len(plan_lst) < 0:
             # You can return a false here if you are sure you wont have empty plans
             pass

@@ -67,17 +67,28 @@ class LsLiteEnv(Env):
 		##TEST ON PROBLEMS WITH SAME CHALLENGE LEVEL
 		problems = self.problem_set[self.challenge_level - 1]
 		numProbsSolved = 0
+		numProbsNotSolved = 0
+		reward = 0
 		for problem in problems:
 			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
 			#print("Valid Plan Found: ", valid_plan)
 			if valid_plan:
 				numProbsSolved += 1
-				reward = 100 * numProbsSolved
+				#reward = 100 * numProbsSolved
 			else:
-				reward = -100 * (len(problems) - numProbsSolved)
-		if numProbsSolved == len(problems) and self.challenge_level < self.numLevels:
-			done = True
-			self.challenge_level += 1
+				numProbsNotSolved += 1
+				#reward = -100 * (len(problems) - numProbsSolved)
+
+		if numProbsSolved >= numProbsNotSolved:
+			reward = 100 * (numProbsSolved)
+		else:
+			reward = -100 * (numProbsNotSolved)
+
+		#if numProbsSolved == len(problems) and self.challenge_level < self.numLevels:
+		if reward == 100 * len(problems):
+			done = True	
+			if self.challenge_level < self.numLevels:
+				self.challenge_level += 1
 
 		return self._get_obs(), reward, done, {}
 

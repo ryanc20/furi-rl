@@ -63,11 +63,12 @@ def chooseAction(epsilon, state):
         action = getPolicy(state)
     return action
 
-def epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
+def epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env):
     total_reward = 0
     reward = 0
     for episode in range(0, num_of_episodes):
         done = False
+        state = env._reset()
         cutoff_counter = 0     #cutoffs the agent after
         while done == False and cutoff_counter < 200:
             action = chooseAction(epsilon, state)
@@ -77,11 +78,16 @@ def epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
             Q[current_key] += alpha * (reward + (next_state_q_val - Q[current_key]))
             total_reward += reward
             state = next_state
-            print(len(Q))
             cutoff_counter += 1
-        print(env.parse_input(state[0], 0))
+            print("Reward: {}\tCounter: {}\tLength of Q: {}".format(reward, cutoff_counter, len(Q)))
+        print("END OF EPISODE {}: value of done = {}".format(episode, done))
+        if done == True:
+            print("A valid plan was found.")
+            break
+        #print(env.parse_input(state[0], 0))
         if episode % 10 == 0:
             print("Episode: {} Total Reward {}".format(episode, total_reward))
+    
 
 def train(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
     """
@@ -124,6 +130,6 @@ legal_actions = env.getLegalActions(state) #list of legal actions for the state
 var = env.serialize(state, legal_actions[0]) #serialize requires an index of the legal actions list.
 print("Key: ", var)
 
-state = env.reset()
+#state = env.reset()
 #train(Q, state, alpha, epsilon, gamma, num_of_episodes, env)
-epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env)
+epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env)
