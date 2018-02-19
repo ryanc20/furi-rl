@@ -62,6 +62,7 @@ class LsLiteEnv(Env):
 		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
 		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
 
+<<<<<<< HEAD
 		valid_plan = self.mt.find_plan_and_test(accepted_relations)
 		#print("Valid Plan Found: ", valid_plan)
 		print("Testing if plan is valid (will print valid if successful):")
@@ -72,13 +73,33 @@ class LsLiteEnv(Env):
 		else: #potential option
 			reward = -1
 		
+=======
+		##TEST ON PROBLEMS WITH SAME CHALLENGE LEVEL
+		problems = self.problem_set[self.challenge_level - 1]
+		numProbsSolved = 0
+		for problem in problems:
+			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
+			#print("Valid Plan Found: ", valid_plan)
+			if valid_plan:
+				reward = 100 * numProbsSolved
+				done = True
+				numProbsSolved += 1
+			else:
+				reward = -100 * (len(problems) - numProbsSolved)
+		if numProbsSolved == len(problems) and self.challenge_level < self.numLevels:
+			self.challenge_level += 1
+
+>>>>>>> 695b835326c6ba4014d95a53e1d11f160af318f0
 		return self._get_obs(), reward, done, {}
 
-	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST):
+	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		print("##INITIALIZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
+		self.problem_set = problem_set
+		self.numLevels = len(problem_set)
+		self.challenge_level = 1
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
 

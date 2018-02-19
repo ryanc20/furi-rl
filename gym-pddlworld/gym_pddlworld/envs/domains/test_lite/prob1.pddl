@@ -5,15 +5,14 @@
 (:objects )
 
 (:init
-        (dummy)
+(dummy)
 )
 
 
 (:goal
 (and
-        (lightbulb_on)
+(lightbulb_on)
 )
 )
 
 )
-

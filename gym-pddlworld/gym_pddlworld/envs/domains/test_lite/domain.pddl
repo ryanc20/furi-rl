@@ -4,6 +4,7 @@
 (:predicates
     (switch1_on)
     (lightbulb_on)
+    (dummy)
 )
 (:action switchon_switch1
     :parameters ()
