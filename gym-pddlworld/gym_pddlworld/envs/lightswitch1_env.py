@@ -91,7 +91,7 @@ class LsLiteEnv(Env):
 		self.challenge_level = 1
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
-
+		self.PROPS.remove('dummy')
 		self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
 		print("Actions: ", self.ACTS)
 		print("Propositions: ", self.PROPS)
@@ -243,6 +243,25 @@ class LsLiteEnv(Env):
 
 		formatted_key = state_val + "-" + action_val 
 		return formatted_key
+
+	def testState(self, state):
+		pre, eff = state
+		
+		#Convert state into propositions
+		str_length = 3*len(self.PROPS) * len(self.ACTS)
+		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
+		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
+
+		print("Here")
+		print(accepted_relations)
+		#Test the problems
+		problems = self.problem_set[self.challenge_level - 1]
+		numProbsSolved = 0
+		for problem in problems:
+			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
+			#print("Valid Plan Found: ", valid_plan)
+			if valid_plan:
+				print("Problem solved: ", problem)
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""

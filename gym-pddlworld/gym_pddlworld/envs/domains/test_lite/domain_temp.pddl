@@ -3,7 +3,7 @@
 (:requirements :strips :typing :negative-preconditions)
 (:predicates
     (switch1_on)
-    (light_bulb_on)
+    (lightbulb_on)
     (dummy)
 )
 
