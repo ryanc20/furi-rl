@@ -102,7 +102,8 @@ class LsLiteEnv(Env):
 		self.challenge_level = 1
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
-		self.PROPS.remove('dummy')
+		if 'dummy' in self.PROPS:
+			self.PROPS.remove('dummy')
 		self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
 		print("Actions: ", self.ACTS)
 		print("Propositions: ", self.PROPS)
