@@ -68,7 +68,8 @@ def epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
     reward = 0
     for episode in range(0, num_of_episodes):
         done = False
-        while done == False:
+        cutoff_counter = 0     #cutoffs the agent after
+        while done == False and cutoff_counter < 200:
             action = chooseAction(epsilon, state)
             next_state, reward, done, info = env._step(action)
             current_key = env.serialize(state, action)
@@ -77,7 +78,8 @@ def epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
             total_reward += reward
             state = next_state
             print(len(Q))
-        print(env.parse_input(state))
+            cutoff_counter += 1
+        print(env.parse_input(state[0], 0))
         if episode % 10 == 0:
             print("Episode: {} Total Reward {}".format(episode, total_reward))
 

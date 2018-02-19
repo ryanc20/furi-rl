@@ -134,25 +134,16 @@ class ModelSpaceTool:
         tmp_domain = "/tmp/domain.pddl"
         tmp_problem = "/tmp/problem.pddl"
         tmp_plan = "/tmp/plan.sol"
-<<<<<<< HEAD
-        self.create_domain_file(meta_state, tmp_domain, tmp_problem)
-        plan_lst = ['('+i.strip()+')' for i in os.popen(PLANNER_COMMAND.format(tmp_domain, tmp_problem)).read().strip().split('\n')]
-=======
         self.create_domain_file(meta_state, tmp_domain, problem)
         plan_lst = ['('+i.strip()+')' for i in os.popen(PLANNER_COMMAND.format(tmp_domain, problem)).read().strip().split('\n')]
-        #print (plan_lst)
->>>>>>> 695b835326c6ba4014d95a53e1d11f160af318f0
+        print(plan_lst)
         if len(plan_lst) < 0:
             # You can return a false here if you are sure you wont have empty plans
             pass
         with open(tmp_plan, 'w') as p_fd:
             p_fd.write("\n".join(plan_lst))
-<<<<<<< HEAD
-        v_out = os.popen(VAL_PLAN_CMD.format(self.original_domain_file, self.original_problem_file, tmp_plan)).read().strip()
-
-=======
         v_out = os.popen(VAL_PLAN_CMD.format(self.original_domain_file, problem, tmp_plan)).read().strip()
->>>>>>> 695b835326c6ba4014d95a53e1d11f160af318f0
+        print(v_out)
         return eval(v_out)
 
 

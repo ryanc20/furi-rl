@@ -1,6 +1,8 @@
 from gym import Env
 from gym import error, spaces
 from gym_pddlworld.envs.ModelSpaceTools import ModelSpaceTool
+import random
+
 '''
 ENVIRONMENT
 
@@ -62,18 +64,6 @@ class LsLiteEnv(Env):
 		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
 		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
 
-<<<<<<< HEAD
-		valid_plan = self.mt.find_plan_and_test(accepted_relations)
-		#print("Valid Plan Found: ", valid_plan)
-		print("Testing if plan is valid (will print valid if successful):")
-		if valid_plan:
-			print("Valid plan!")
-			reward = 10
-			done = True
-		else: #potential option
-			reward = -1
-		
-=======
 		##TEST ON PROBLEMS WITH SAME CHALLENGE LEVEL
 		problems = self.problem_set[self.challenge_level - 1]
 		numProbsSolved = 0
@@ -81,15 +71,14 @@ class LsLiteEnv(Env):
 			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
 			#print("Valid Plan Found: ", valid_plan)
 			if valid_plan:
-				reward = 100 * numProbsSolved
-				done = True
 				numProbsSolved += 1
+				reward = 100 * numProbsSolved
 			else:
 				reward = -100 * (len(problems) - numProbsSolved)
 		if numProbsSolved == len(problems) and self.challenge_level < self.numLevels:
+			done = True
 			self.challenge_level += 1
 
->>>>>>> 695b835326c6ba4014d95a53e1d11f160af318f0
 		return self._get_obs(), reward, done, {}
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
@@ -114,10 +103,12 @@ class LsLiteEnv(Env):
 	Resets the environment to the starting state
 	'''
 	def _reset(self):
+		prop_array = ['010', '100', '001'] #picks random start state
+
 		prop_clear = ''
 		for i in range(len(self.ACTS)):
 			for j in range(len(self.PROPS)):
-				prop_clear += '010'
+				prop_clear += random.choice(prop_array)
 		prop_clear = int(prop_clear, 2)
 		self.state = (prop_clear, prop_clear)
 		return self.state
