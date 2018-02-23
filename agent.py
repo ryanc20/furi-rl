@@ -99,7 +99,6 @@ def epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env):
             Q[current_key] += alpha * (reward + (next_state_q_val - Q[current_key]))
             total_reward += reward
             state = next_state
-            print(len(Q))
             cutoff_counter += 1
             print("Reward: {}\tCounter: {}\tLength of Q: {}".format(reward, cutoff_counter, len(Q)))
         print("END OF EPISODE {}: value of done = {}".format(episode, done))
@@ -154,4 +153,4 @@ var = env.serialize(state, legal_actions[0]) #serialize requires an index of the
 print("Key: ", var)
 
 #train(Q, state, alpha, epsilon, gamma, num_of_episodes, env)
-epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env)
+epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env)
