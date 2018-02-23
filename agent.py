@@ -100,8 +100,17 @@ def epsilonGreedyTrain(Q, state, alpha, epsilon, gamma, num_of_episodes, env):
             state = next_state
             print(len(Q))
             cutoff_counter += 1
+<<<<<<< HEAD
         str_length = 3*len(env.PROPS) * len(env.ACTS)
         print(env.parse_input(format(state[0],"b").zfill(str_length), 0))
+=======
+            print("Reward: {}\tCounter: {}\tLength of Q: {}".format(reward, cutoff_counter, len(Q)))
+        print("END OF EPISODE {}: value of done = {}".format(episode, done))
+        if done == True:
+            print("A valid plan was found.")
+            break
+        #print(env.parse_input(state[0], 0))
+>>>>>>> ryan/master
         if episode % 10 == 0:
             print("Episode: {} Total Reward {}".format(episode, total_reward))
 
