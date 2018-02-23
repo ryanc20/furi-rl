@@ -84,11 +84,13 @@ class LsLiteEnv(Env):
 		else:
 			reward = -100 * (numProbsNotSolved)
 
-		#if numProbsSolved == len(problems) and self.challenge_level < self.numLevels:
-		if reward == 100 * len(problems):
-			done = True	
-			if self.challenge_level < self.numLevels:
-				self.challenge_level += 1
+		# Check if level is complete by comparing number of 
+		level_complete = numProbsSolved == len(problems)
+
+		if level_complete and self.challenge_level < self.numLevels:
+			self.challenge_level += 1
+		elif level_complete and self.challenge_level == self.numLevels:
+			done = True
 
 		return self._get_obs(), reward, done, {}
 
