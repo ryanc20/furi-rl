@@ -276,6 +276,14 @@ class LsLiteEnv(Env):
 			#print("Valid Plan Found: ", valid_plan)
 			if valid_plan:
 				print("Problem solved: ", problem)
+	
+	def testFinalState(self):
+		accepted_relations = self.mt.domain_props
+		for level in self.problem_set
+			for problem in level:
+				valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
+				if valid_plan:
+					print("Problem solved: ", problem)
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""
