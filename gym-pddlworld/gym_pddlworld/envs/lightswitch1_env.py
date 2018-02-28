@@ -1,8 +1,12 @@
 from gym import Env
 from gym import error, spaces
 from gym_pddlworld.envs.ModelSpaceTools import ModelSpaceTool
+from gym_pddlworld.envs.ProbGen import ProbGen
 import random
+import os
+from datetime import datetime
 
+RL_DIR = os.environ.get('RL_DIR')
 '''
 ENVIRONMENT
 
@@ -20,44 +24,76 @@ class LsLiteEnv(Env):
 	def __init__(self):
 		self.state = None
 		self.observation_space = spaces.Tuple((int, int))
+
+	def oracleAction(self):
+		meta_updates = list()
+		num_props = random.randint(0, len(self.PROPS)) ## number of props for
+		init_state = random.sample(self.PROPS, num_props) 
+		##Choose random OBJ action
+		rand_act = random.sample(len(self.ACTS), 1)
+		#CALL PROB GEN
+		action_effects = self.probGen.generate_next_state(init_state, rand_act)
+
+		## Determine meta-actions to update the preconditions in the meta-state
+		for prop in init_state:
+			meta_updates.append((0, self.ACTS.index(rand_act), self.PROPS.index(prop), 0))
+
+		## Determine what meta-actions to update the effects in the meta-state
+		for eff in action_effects:
+			todo, prop = eff
+			if todo = 'add':
+				meta_updates.append((1, self.ACTS.index(rand_act), self.PROPS.index(prop), 0))
+			else:
+				meta_updates.append((1, self.ACTS.index(rand_act), self.PROPS.index(prop), 2))
+		
+		return meta_updates
+
+	def updateState(self, meta_action):
+		clause, act, prop, val = action
+			target_clause = pre
+			if clause:
+				target_clause = eff
+
+			# Calculate starting index for triplet
+			action_start = 3 * len(self.PROPS) * act
+			prop_start = 3 * prop
+			triplet_index = action_start + prop_start
+
+			# Change bits for target triplet to 000
+			new_clause_val = set_bit(target_clause, triplet_index, 0)
+			new_clause_val = set_bit(new_clause_val, triplet_index + 1, 0)
+			new_clause_val = set_bit(new_clause_val, triplet_index + 2, 0)
+
+			if val == 0:
+				# Change triplet to 100
+				new_clause_val = set_bit(new_clause_val, triplet_index + 2, 1)
+			elif val == 1:
+				# Change triplet to 010
+				new_clause_val = set_bit(new_clause_val, triplet_index + 1, 1)
+			else:
+				# Change triplet to 001
+				new_clause_val = set_bit(new_clause_val, triplet_index, 1)
+			if clause == 0:
+				self.state = (new_clause_val, eff)
+			else:
+				self.state = (pre, new_clause_val)
 	'''
 	Performs the input action and returns the resulting state, reward
 	Input: action
 	Ouput: state, reward, done, log_info
 	'''
 	def _step(self, action):
-		clause, act, prop, val = action
 		pre, eff = self.state
 		done = False
 		reward = 0
 
-		target_clause = pre
-		if clause:
-			target_clause = eff
-
-		# Calculate starting index for triplet
-		action_start = 3 * len(self.PROPS) * act
-		prop_start = 3 * prop
-		triplet_index = action_start + prop_start
-
-		# Change bits for target triplet to 000
-		new_clause_val = set_bit(target_clause, triplet_index, 0)
-		new_clause_val = set_bit(new_clause_val, triplet_index + 1, 0)
-		new_clause_val = set_bit(new_clause_val, triplet_index + 2, 0)
-
-		if val == 0:
-			# Change triplet to 100
-			new_clause_val = set_bit(new_clause_val, triplet_index + 2, 1)
-		elif val == 1:
-			# Change triplet to 010
-			new_clause_val = set_bit(new_clause_val, triplet_index + 1, 1)
+		if action = 'ORACLE':
+			meta_updates = self.oracleAction()
+			## Perform all the updates to the meta-state
+			for meta_action in meta_updates:
+				self.updateState(meta_action)
 		else:
-			# Change triplet to 001
-			new_clause_val = set_bit(new_clause_val, triplet_index, 1)
-		if clause == 0:
-			self.state = (new_clause_val, eff)
-		else:
-			self.state = (pre, new_clause_val)
+			self.updateState(action)
 
 		pre, eff = self.state
 		str_length = 3*len(self.PROPS) * len(self.ACTS)
@@ -87,6 +123,16 @@ class LsLiteEnv(Env):
 		# Check if level is complete by comparing number of 
 		level_complete = numProbsSolved == len(problems)
 
+		## Record Results if Level was completed
+		if level_complete:
+			pddl_file = '/tmp/domain.pddl'
+			dest_file = '{}RL_Search_Results/{}:{}:{}_{}:{}_Level{}_domain.pddl'.format(RL_DIR, datetime.now().year, datetime.now().month, datetime.now().day, datetime.now().hour, datetime.now().minute, self.challenge_level)
+			with open(dest_file, 'w') as d_fd:
+				with open(pddl_file, 'r') as p_fd:
+					d_fd.write(p_fd.read())
+			print("Agent Passed Level: ", self.challenge_level)
+
+		## Increment the challenge level OR end the search
 		if level_complete and self.challenge_level < self.numLevels:
 			self.challenge_level += 1
 		elif level_complete and self.challenge_level == self.numLevels:
@@ -96,6 +142,7 @@ class LsLiteEnv(Env):
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
 		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
+		self.probGen = ProbGen(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL)
 		print("##INITIALIZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
@@ -213,6 +260,8 @@ class LsLiteEnv(Env):
 		str_length = 3*len(self.PROPS) * len(self.ACTS)
 		legal_actions += self.parseLegalActions(format(pre,"b").zfill(str_length), 0)
 		legal_actions += self.parseLegalActions(format(eff,"b").zfill(str_length), 1)
+		## TACK ON ORACLE ACTION
+		legal_actions.append('ORACLE')
 		return legal_actions
 
 
@@ -253,7 +302,10 @@ class LsLiteEnv(Env):
 		from each legal action in getLegalActions(state).
 		"""
 		state_val = str(state[0]) + "-" + str(state[1])
-		action_val = str(action[0]) + "-" + str(action[1]) + "-" + str(action[2]) + "-" + str(action[3])
+		if action=='ORACLE':
+			action_val = 'ORACLE'
+		else:
+			action_val = str(action[0]) + "-" + str(action[1]) + "-" + str(action[2]) + "-" + str(action[3])
 
 		formatted_key = state_val + "-" + action_val 
 		return formatted_key
@@ -279,7 +331,7 @@ class LsLiteEnv(Env):
 	
 	def testFinalState(self):
 		accepted_relations = self.mt.domain_props
-		for level in self.problem_set
+		for level in self.problem_set:
 			for problem in level:
 				valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
 				if valid_plan:
