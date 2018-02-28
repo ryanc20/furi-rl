@@ -12,7 +12,7 @@ PROP_LIST = ''
 
 RL_DIR = os.environ.get('RL_DIR')
 
-if False:
+if True:
     DOMAIN_MOD = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain.pddl'
     PROB = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob.pddl'
     DOM_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain_temp.pddl'
@@ -45,7 +45,8 @@ else:
     PROP_LIST =  RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prop_list'
     level_one = [
         RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob1.pddl',
-        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob2.pddl'
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob2.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob3.pddl'
     ]
     problem_list = [level_one]
 
@@ -146,7 +147,7 @@ Q = defaultdict(lambda: 0, Q)
 alpha =.6       # learning rate
 epsilon = .1    # epsilon-greedy rate
 gamma = .9      # discount factor
-num_of_episodes = 50
+num_of_episodes = 200
 print("State: ", state[0], state[1])
 legal_actions = env.getLegalActions(state) #list of legal actions for the state
 var = env.serialize(state, legal_actions[0]) #serialize requires an index of the legal actions list.
