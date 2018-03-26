@@ -31,6 +31,8 @@ class ProbGen:
         with open(self.prob_template_file) as p_fd:
             self.prob_template_str = "\n".join([i.strip() for i in p_fd.readlines()])
 
+
+
     def convert_prop_tuple_list(self, orig_prop_list, skip_list = []):
         prop_list = set()
         for p in orig_prop_list:

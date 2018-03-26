@@ -12,7 +12,7 @@ PROP_LIST = ''
 
 RL_DIR = os.environ.get('RL_DIR')
 
-if False:
+if True:
     DOMAIN_MOD = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain.pddl'
     PROB = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob.pddl'
     DOM_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain_temp.pddl'
@@ -45,15 +45,20 @@ else:
     PROP_LIST =  RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prop_list'
     level_one = [
         RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob1.pddl',
-        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob2.pddl'
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob2.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob3.pddl'
     ]
     problem_list = [level_one]
 
 env = gym.make('lslite-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_list)
-state = env.reset()
 
-pre = int('010001010100',2)
-eff = int('100100001001', 2)
-state = (pre, eff)
-env.testState(state)
+for episode in range(100):
+    state = env.reset()
+    num_acts = 0
+    done = False
+    while not done and num_acts <= 200:
+        next_state, reward, done, info = env._step('ORACLE')
+        state = next_state
+        print("Reward: {}\tCounter: {}\t\tOracleCalls: {}".format(reward, cutoff_counter, num_oracle_calls))
+    print("END OF EPISODE {}: value of done = {}".format(episode, done))

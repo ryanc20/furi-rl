@@ -12,7 +12,9 @@ PROP_LIST = ''
 
 RL_DIR = os.environ.get('RL_DIR')
 
-if False:
+domain='medium'
+
+if domain == 'large':
     DOMAIN_MOD = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain.pddl'
     PROB = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/prob.pddl'
     DOM_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/domain_temp.pddl'
@@ -37,7 +39,7 @@ if False:
         RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_domain/Length_3/prob6.pddl',
     ]
     problem_list = [level_one, level_two, level_three]
-else: 
+elif domain == 'small': 
     DOMAIN_MOD = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/domain.pddl'
     PROB = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob.pddl'
     DOM_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/domain_temp.pddl'
@@ -45,9 +47,31 @@ else:
     PROP_LIST =  RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prop_list'
     level_one = [
         RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob1.pddl',
-        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob2.pddl'
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob2.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/test_lite/prob3.pddl'
     ]
     problem_list = [level_one]
+elif domain == 'medium':
+    DOMAIN_MOD = RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/domain.pddl'
+    PROB = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/prob.pddl'
+    DOM_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/domain_temp.pddl'
+    PROB_TEMPL = RL_DIR +  'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/prob_templ.pddl'
+    PROP_LIST =  RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/prop_list'
+    level_one = [
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level1/prob1.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level1/prob2.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level1/prob3.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level1/prob4.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level1/prob5.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level1/prob6.pddl'
+    ]
+    level_two = [
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level2/prob1.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level2/prob2.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level2/prob3.pddl',
+        RL_DIR + 'furi-rl/gym-pddlworld/gym_pddlworld/envs/domains/lightswitch_medium/Level2/prob4.pddl',
+    ]
+    problem_list = [level_one, level_two]
 
 env = gym.make('lslite-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_list)
@@ -85,6 +109,7 @@ def chooseAction(epsilon, state):
     return action
 
 def epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env):
+    num_oracle_calls = 0
     total_reward = 0
     reward = 0
     for episode in range(0, num_of_episodes):
@@ -93,6 +118,8 @@ def epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env):
         cutoff_counter = 0     #cutoffs the agent after
         while done == False and cutoff_counter < 200:
             action = chooseAction(epsilon, state)
+            if action == 'ORACLE':
+                num_oracle_calls += 1
             next_state, reward, done, info = env._step(action)
             current_key = env.serialize(state, action)
             next_state_q_val = getValue(next_state)
@@ -100,7 +127,7 @@ def epsilonGreedyTrain(Q, alpha, epsilon, gamma, num_of_episodes, env):
             total_reward += reward
             state = next_state
             cutoff_counter += 1
-            print("Reward: {}\tCounter: {}\tLength of Q: {}".format(reward, cutoff_counter, len(Q)))
+            print("Reward: {}\tCounter: {}\tLength of Q: {}\tOracleCalls: {}".format(reward, cutoff_counter, len(Q), num_oracle_calls))
         print("END OF EPISODE {}: value of done = {}".format(episode, done))
         if done == True:
             print("A valid plan was found.")
@@ -144,9 +171,9 @@ def train(Q, alpha, epsilon, gamma, num_of_episodes, env):
 Q = {}
 Q = defaultdict(lambda: 0, Q)
 alpha =.6       # learning rate
-epsilon = .1    # epsilon-greedy rate
+epsilon = .3    # epsilon-greedy rate
 gamma = .9      # discount factor
-num_of_episodes = 50
+num_of_episodes = 200
 print("State: ", state[0], state[1])
 legal_actions = env.getLegalActions(state) #list of legal actions for the state
 var = env.serialize(state, legal_actions[0]) #serialize requires an index of the legal actions list.
