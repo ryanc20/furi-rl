@@ -1,11 +1,14 @@
 from gym import Env
 from gym import error, spaces
-from gym_pddlworld.envs.ModelSpaceTools import ModelSpaceTool
+from gym_pddlworld.envs.bdd_ModelSpaceTools import bddModelSpaceTool
 from gym_pddlworld.envs.ProbGenScript import ProbGen
 import random
 import os
 from datetime import datetime
-
+from pyeda.inter import *
+import copy
+from collections import defaultdict
+import re
 RL_DIR = os.environ.get('RL_DIR')
 '''
 ENVIRONMENT
@@ -23,29 +26,101 @@ EPISODE TERMINATION
 class OracleEnv(Env):
 	def __init__(self):
 		self.state = None
-		self.observation_space = spaces.Tuple((int, int))
-
-	def oracleAction(self):
-		meta_updates = list()
+		self.state_pre_has_effect = defaultdict(list)
+		self.state_pre_no_effect = defaultdict(list)
+		#self.observation_space = spaces.Tuple((int, int))
+	
+	def generate_sample(self, action):
 		num_props = random.randint(1, len(self.PROPS)) ## number of props to sample
 		init_state = set(random.sample(self.PROPS, num_props))
 		##Choose random OBJ action
-		rand_act = self.ACTS[random.randint(0, len(self.ACTS) - 1 )]
+		rand_act = self.ACTS[random.randint(0, len(self.ACTS) - 1 )]\
 		#CALL PROB GEN
 		action_effects = self.probGen.generate_next_state(init_state, rand_act)
 
-		## Determine meta-actions to update the preconditions in the meta-state
-		for prop in init_state:
-			meta_updates.append((0, self.ACTS.index(rand_act), self.PROPS.index(prop), 0))
+		return init_state, action_effects
 
-		## Determine what meta-actions to update the effects in the meta-state
+	def format_expr(self, expr):
+		expr = expr.replace("Or(", "(or ")
+		expr = expr.replace("And(", "(and ")
+		expr = expr.replace(",", "")
+		expr = expr.replace("Not(", "(not")
+		expr = re.sub("~([^\s]+)", r"(not \1)", expr)
+		for prop in self.PROPS:
+			if prop in expr:
+				expr = expr.replace(prop, "({})".format(prop))
+		return expr
+
+	def create_expr(self, obj_state):
+		#Create initial state expression
+		obj_state = list(obj_state)
+		if len(obj_state) != 0:
+			init_expr = exprvar(obj_state[0])
+			for i in range(1, len(obj_state)):
+				prop = obj_state[i]
+				init_expr = init_expr & exprvar(prop)
+		return init_expr.simplify()
+	
+	def combine_by_disjunction(self, disjuncts):
+		disjuncts = list(disjuncts)
+		if len(disjuncts) != 0:
+			expr = disjuncts[0]
+			for i in range(1, len(disjuncts)):
+				dis = disjuncts[i]
+				expr = expr | dis
+			return expr.simplify()
+		else:
+			return None
+
+	def generate_preconditions(self):
+		# Dictionary of action -> precondition
+		preconditions = defaultdict(str)
+
+		#Create precondition for each action
+		for action in self.ACTS:
+			pre_has_effect = self.combine_by_disjunction(self.state_pre_has_effect[action])
+			pre_no_effect = self.combine_by_disjunction(self.state_pre_no_effect[action])
+			if(pre_has_effect != None):
+				# Case 1: We have data on what works and doesn't work
+				if pre_no_effect != None:
+					pre = pre_has_effect & ~pre_no_effect
+					#pre = pre.to_dnf()
+					preconditions[action] = self.format_expr(str(pre))
+				# Case 2: We have data only on what works
+				else:
+					pre = pre_has_effect
+					preconditions[action] = self.format_expr(str(pre))
+			# Case 3: No data => precondition is empty
+			else:
+				preconditions[action] = '(and )'
+			if preconditions[action] == '1':
+				print(self.state_pre_has_effect[action])
+				print(self.state_pre_no_effect[action])
+				print(action, "_pre: ", preconditions[action]) 
+		return preconditions
+
+	def oracleAction(self, action):
+		meta_updates = list()
+
+		# Generate S, A, S' sample		
+		init_state, action_effects = self.generate_sample(action)
+
+		# Generate the BDD representation of S
+		init_expr = self.create_expr(init_state)		
+
+		# Determine meta-actions needed to update the meta-state effects
+		# If S' != S, then add S to precondition has effect list
 		if action_effects != None:
+			self.state_pre_has_effect[action].append(init_expr)
 			for eff in action_effects:
 				todo, prop = eff
 				if todo == 'add':
-					meta_updates.append((1, self.ACTS.index(rand_act), self.PROPS.index(prop), 0))
+					meta_updates.append((1, self.ACTS.index(action), self.PROPS.index(prop), 0))
 				else:
-					meta_updates.append((1, self.ACTS.index(rand_act), self.PROPS.index(prop), 2))
+					meta_updates.append((1, self.ACTS.index(action), self.PROPS.index(prop), 2))
+		# If S' == S, then add S to precondition no effect list
+		else:
+			self.state_pre_no_effect[action].append(init_expr)
 		return meta_updates
 
 	def updateState(self, meta_action):
@@ -80,68 +155,72 @@ class OracleEnv(Env):
 			self.state = (new_clause_val, eff)
 		else:
 			self.state = (pre, new_clause_val)
-	'''
-	Performs the input action and returns the resulting state, reward
-	Input: action
-	Ouput: state, reward, done, log_info
-	'''
-	def _step(self, action):
-		pre, eff = self.state
-		done = False
+
+	def evaluteProblemSet(self):
 		reward = 0
-
-		if action == 'ORACLE':
-			meta_updates = self.oracleAction()
-			## Perform all the updates to the meta-state
-			for meta_action in meta_updates:
-				self.updateState(meta_action)
-		else:
-			self.updateState(action)
-
-		accepted_relations = self.getAcceptedRelations(self.state)
-
-		##TEST ON PROBLEMS WITH SAME CHALLENGE LEVEL
+		done = False
+		
+		# Test on problems with same challenge level
 		problems = self.problem_set[self.challenge_level - 1]
 		numProbsSolved = 0
 		numProbsNotSolved = 0
-		reward = 0
+
+		effects = self.getAcceptedRelations(self.state)
+		precons = self.generate_preconditions()
 		for problem in problems:
-			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
-			#print("Valid Plan Found: ", valid_plan)
+			valid_plan = self.mt.find_plan_and_test(precons, effects, problem)
+			print("Valid Plan Found: ", valid_plan)
 			if valid_plan:
 				numProbsSolved += 1
-				#reward = 100 * numProbsSolved
 			else:
 				numProbsNotSolved += 1
-				#reward = -100 * (len(problems) - numProbsSolved)
 
 		if numProbsSolved >= numProbsNotSolved:
 			reward = 100 * (numProbsSolved)
 		else:
 			reward = -100 * (numProbsNotSolved)
 
-		# Check if level is complete by comparing number of 
+		# Check if level is complete by comparing number of problems solved
 		level_complete = numProbsSolved == len(problems)
 
-		## Record Results if Level was completed
+		# Record Results if Level was completed
 		if level_complete:
 			pddl_file = '/tmp/domain.pddl'
-			dest_file = '{}RL_Search_Results/{}:{}:{}_{}:{}_Level{}_domain.pddl'.format(RL_DIR, datetime.now().year, datetime.now().month, datetime.now().day, datetime.now().hour, datetime.now().minute, self.challenge_level)
+			dest_file = '{}RL_Search_Results/{}:{}:{}_{}:{}_Level{}_domain_bdd_oracle_env.pddl'.format(RL_DIR, datetime.now().year, datetime.now().month, datetime.now().day, datetime.now().hour, datetime.now().minute, self.challenge_level)
 			with open(dest_file, 'w') as d_fd:
 				with open(pddl_file, 'r') as p_fd:
 					d_fd.write(p_fd.read())
 			print("Agent Passed Level: ", self.challenge_level)
 
-		## Increment the challenge level OR end the search
+		# Increment the challenge level OR end the search
 		if level_complete and self.challenge_level < self.numLevels:
 			self.challenge_level += 1
 		elif level_complete and self.challenge_level == self.numLevels:
 			done = True
 
+		return reward, done
+
+	'''
+	Performs the input action and returns the resulting state, reward
+	Input: action
+	Ouput: state, reward, done, log_info
+	'''
+	def _step(self, meta_action):
+		reward = 0
+		done = False
+		# Evalute the current model on the problem set
+		if meta_action == 'EVAL':
+			reward, done = self.evaluteProblemSet()
+		# Perform the oracle action on the given object level action
+		else:
+			meta_updates = self.oracleAction(meta_action)
+			## Perform all the updates to the meta-state
+			for meta_act in meta_updates:
+				self.updateState(meta_act)
 		return self._get_obs(), reward, done, {}
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
-		self.mt = ModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
+		self.mt = bddModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		self.probGen = ProbGen(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL)
 		print("##INITIALIZING WITH PDDL")
 		self.ACTS = self.mt.action_list
@@ -151,9 +230,10 @@ class OracleEnv(Env):
 		self.challenge_level = 1
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
+			var = exprvar(self.PROPS[index])
 		if 'dummy' in self.PROPS:
 			self.PROPS.remove('dummy')
-		self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
+		#self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
 		print("Actions: ", self.ACTS)
 		print("Propositions: ", self.PROPS)
 		print("Goals: ", self.mt.dom_prob.goals())
@@ -164,12 +244,12 @@ class OracleEnv(Env):
 	Resets the environment to the starting state
 	'''
 	def _reset(self):
-		prop_array = ['010', '100', '001'] #picks random start state
-
+		# Instantiate state as clear 010 for every prop
+		# prop_array = ['010', '100', '001'] 
 		prop_clear = ''
 		for i in range(len(self.ACTS)):
 			for j in range(len(self.PROPS)):
-				prop_clear += random.choice(prop_array)
+				prop_clear += '010'
 		prop_clear = int(prop_clear, 2)
 		self.state = (prop_clear, prop_clear)
 		return self.state
@@ -251,42 +331,11 @@ class OracleEnv(Env):
 		#print("Eff: ", format(eff,"b").zfill(str_length))
 		print("Accepted relations: ", props)
 	
-	def getLegalActions(self, state):
-		legal_actions = list()
-		pre, eff = state
-		str_length = 3*len(self.PROPS) * len(self.ACTS)
-		legal_actions += self.parseLegalActions(format(pre,"b").zfill(str_length), 0)
-		legal_actions += self.parseLegalActions(format(eff,"b").zfill(str_length), 1)
-		## TACK ON ORACLE ACTION
-		legal_actions.append('ORACLE')
-		return legal_actions
-
-
-	def parseLegalActions(self, input, clause):
-		legal_actions = list()
-		action_length = 3 * len(self.PROPS)
-		total_actions = len(self.ACTS)
-		action_index = total_actions - 1
-		prop_index = len(self.PROPS) - 1
-
-		for i in range(0, len(input)):
-			if i % action_length == 0 and i != 0: #Updates the action_index for every 6 binary values
-				action_index -= 1
-				prop_index = len(self.PROPS) - 1
-			if i % 3 == 0 and i % action_length != 0 and i != 0:
-				prop_index -= 1
-			if i % 3 == 0: #Tests 3 bits at a time to see if the proposition is valid
-				if input[i: i + 3] == "100":
-					legal_actions.append((clause, action_index, prop_index, 1))
-					legal_actions.append((clause, action_index, prop_index, 2))
-
-				elif input[i: i + 3] == "001":
-					legal_actions.append((clause, action_index, prop_index, 0))
-					legal_actions.append((clause, action_index, prop_index, 1))
-				elif input[i: i + 3] == "010":
-					legal_actions.append((clause, action_index, prop_index, 0))
-					legal_actions.append((clause, action_index, prop_index, 2))
-
+	def getLegalActions(self):
+		# Oracle action for each obj level action
+		legal_actions = copy.deepcopy(self.ACTS)
+		# Evaluation Action
+		legal_actions.append('EVAL')
 		return legal_actions
 
 	def serialize(self, state, action):
@@ -307,40 +356,12 @@ class OracleEnv(Env):
 		formatted_key = state_val + "-" + action_val 
 		return formatted_key
 
-	def testState(self, state):
-		pre, eff = state
-		
-		#Convert state into propositions
-		str_length = 3*len(self.PROPS) * len(self.ACTS)
-		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
-		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
-
-		print("Here")
-		print(accepted_relations)
-		#Test the problems
-		problems = self.problem_set[self.challenge_level - 1]
-		numProbsSolved = 0
-		for problem in problems:
-			valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
-			#print("Valid Plan Found: ", valid_plan)
-			if valid_plan:
-				print("Problem solved: ", problem)
-	
-	def testFinalState(self):
-		accepted_relations = self.mt.domain_props
-		for level in self.problem_set:
-			for problem in level:
-				valid_plan = self.mt.find_plan_and_test(accepted_relations, problem)
-				if valid_plan:
-					print("Problem solved: ", problem)
-
 	def getAcceptedRelations(self, state):
 		pre, eff = state
 		str_length = 3*len(self.PROPS) * len(self.ACTS)
 		accepted_relations = self.parse_input(format(pre,"b").zfill(str_length), 0)
 		accepted_relations += self.parse_input(format(eff,"b").zfill(str_length), 1)
 		return accepted_relations
-
 
 def set_bit(value, index, flip):
 	"""Set the index:th bit of value to 1 if flip = true, else 0"""

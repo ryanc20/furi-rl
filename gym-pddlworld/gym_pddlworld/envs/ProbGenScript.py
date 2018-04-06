@@ -114,7 +114,7 @@ class ProbGen:
 
 
 
-    def find_plan_and_test(self):
+    def find_plan_and_test(self, meta_state):
         tmp_domain = "/tmp/domain.pddl"
         tmp_problem = "/tmp/problem.pddl"
         tmp_plan = "/tmp/plan.sol"
