@@ -1,2 +1,3 @@
 from gym_pddlworld.envs.lightswitch1_env import LsLiteEnv
 from gym_pddlworld.envs.ModelSpaceTools import ModelSpaceTool
+from gym_pddlworld.envs.oracle_env import OracleEnv
