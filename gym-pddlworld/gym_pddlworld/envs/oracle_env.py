@@ -55,11 +55,11 @@ class OracleEnv(Env):
 		#Create initial state expression
 		obj_state = list(obj_state)
 		if len(obj_state) != 0:
-			init_expr = exprvar(obj_state[0])
+			init_expr = bddvar(obj_state[0])
 			for i in range(1, len(obj_state)):
 				prop = obj_state[i]
-				init_expr = init_expr & exprvar(prop)
-		return init_expr.simplify()
+				init_expr = init_expr & bddvar(prop)
+		return init_expr
 	
 	def combine_by_disjunction(self, disjuncts):
 		disjuncts = list(disjuncts)
@@ -68,7 +68,8 @@ class OracleEnv(Env):
 			for i in range(1, len(disjuncts)):
 				dis = disjuncts[i]
 				expr = expr | dis
-			return expr.simplify()
+			return expr
+			
 		else:
 			return None
 
@@ -84,19 +85,21 @@ class OracleEnv(Env):
 				# Case 1: We have data on what works and doesn't work
 				if pre_no_effect != None:
 					pre = pre_has_effect & ~pre_no_effect
-					#pre = pre.to_dnf()
-					preconditions[action] = self.format_expr(str(pre))
+					preconditions[action] = self.format_expr(str(bdd2expr(pre)))
+					#print("Pre: ", preconditions[action])
+
 				# Case 2: We have data only on what works
 				else:
 					pre = pre_has_effect
-					preconditions[action] = self.format_expr(str(pre))
+					preconditions[action] = self.format_expr(str(bdd2expr(pre)))
 			# Case 3: No data => precondition is empty
 			else:
 				preconditions[action] = '(and )'
-			if preconditions[action] == '1':
-				print(self.state_pre_has_effect[action])
-				print(self.state_pre_no_effect[action])
-				print(action, "_pre: ", preconditions[action]) 
+			if preconditions[action] == '0' or preconditions[action] == '1':
+				#print("{}_Precondition: {}".format(action, preconditions[action]))
+				#print("{}_has_effect: {}".format(action, bdd2expr(pre_has_effect)))
+				#print("{}_no_effect: {}".format(action, bdd2expr(pre_no_effect)))
+				preconditions[action] = '(and )'
 		return preconditions
 
 	def oracleAction(self, action):
@@ -169,7 +172,7 @@ class OracleEnv(Env):
 		precons = self.generate_preconditions()
 		for problem in problems:
 			valid_plan = self.mt.find_plan_and_test(precons, effects, problem)
-			print("Valid Plan Found: ", valid_plan)
+			#print("Valid Plan Found: ", valid_plan)
 			if valid_plan:
 				numProbsSolved += 1
 			else:
@@ -230,7 +233,7 @@ class OracleEnv(Env):
 		self.challenge_level = 1
 		for index in range(len(self.PROPS)):
 			self.PROPS[index] = self.PROPS[index].strip("()")
-			var = exprvar(self.PROPS[index])
+			var = bddvar(self.PROPS[index])
 		if 'dummy' in self.PROPS:
 			self.PROPS.remove('dummy')
 		#self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))

@@ -54,10 +54,12 @@ env = gym.make('oracle-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_list)
 
 state = env.reset()
-for i in range(0, 150):
-    legal_actions = env.getLegalActions()
-    legal_actions.remove('EVAL')
-    act = random.choice(legal_actions)
-    next_state, reward, done, info = env._step(act)
-    print(next_state)
-env._step('EVAL')
+for j in range(0, 1):
+    print(j)
+    for i in range(0, 400):
+        #print(i, end='')
+        legal_actions = env.getLegalActions()
+        legal_actions.remove('EVAL')
+        act = random.choice(legal_actions)
+        next_state, reward, done, info = env._step(act)
+    env._step('EVAL')
