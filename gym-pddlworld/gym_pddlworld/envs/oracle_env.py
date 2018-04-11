@@ -33,10 +33,8 @@ class OracleEnv(Env):
 	def generate_sample(self, action):
 		num_props = random.randint(1, len(self.PROPS)) ## number of props to sample
 		init_state = set(random.sample(self.PROPS, num_props))
-		##Choose random OBJ action
-		rand_act = self.ACTS[random.randint(0, len(self.ACTS) - 1 )]\
 		#CALL PROB GEN
-		action_effects = self.probGen.generate_next_state(init_state, rand_act)
+		action_effects = self.probGen.generate_next_state(init_state, action)
 
 		return init_state, action_effects
 
@@ -59,6 +57,9 @@ class OracleEnv(Env):
 			for i in range(1, len(obj_state)):
 				prop = obj_state[i]
 				init_expr = init_expr & bddvar(prop)
+			for prop in self.PROPS:
+				if prop not in obj_state:
+					init_expr = init_expr & ~bddvar(prop)
 		return init_expr
 	
 	def combine_by_disjunction(self, disjuncts):
@@ -107,6 +108,11 @@ class OracleEnv(Env):
 
 		# Generate S, A, S' sample		
 		init_state, action_effects = self.generate_sample(action)
+
+		# print("######## ORACLE CALL #############")
+		# print("Init State: ", init_state)
+		# print("Action: ", action)
+		# print("Action Effects: ", action_effects)
 
 		# Generate the BDD representation of S
 		init_expr = self.create_expr(init_state)		
@@ -165,6 +171,8 @@ class OracleEnv(Env):
 		
 		# Test on problems with same challenge level
 		problems = self.problem_set[self.challenge_level - 1]
+		#if self.challenge_level == 3:
+		#	print(problems)
 		numProbsSolved = 0
 		numProbsNotSolved = 0
 
@@ -198,7 +206,9 @@ class OracleEnv(Env):
 		# Increment the challenge level OR end the search
 		if level_complete and self.challenge_level < self.numLevels:
 			self.challenge_level += 1
+
 		elif level_complete and self.challenge_level == self.numLevels:
+			print("Final Level Complete")
 			done = True
 
 		return reward, done
@@ -213,7 +223,14 @@ class OracleEnv(Env):
 		done = False
 		# Evalute the current model on the problem set
 		if meta_action == 'EVAL':
+			past_level = self.challenge_level
 			reward, done = self.evaluteProblemSet()
+			current_level = self.challenge_level
+			while past_level < current_level:
+				past_level = self.challenge_level
+				reward, done = self.evaluteProblemSet()
+				current_level = self.challenge_level
+
 		# Perform the oracle action on the given object level action
 		else:
 			meta_updates = self.oracleAction(meta_action)
@@ -225,6 +242,17 @@ class OracleEnv(Env):
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
 		self.mt = bddModelSpaceTool(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST)
 		self.probGen = ProbGen(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL)
+
+		# ORACLE TESTING: Checking add/del table
+		# print("########### ADD / DEL ################")
+		# for action in self.probGen.action_map.keys():
+		# 	print("ACTION: {}".format(action))
+		# 	for condition in self.probGen.action_map[action].keys():
+		# 		if len(self.probGen.action_map[action][condition]) > 0:
+		# 			print(condition.upper())
+		# 			for prop in self.probGen.action_map[action][condition]:
+		# 				print("\t", prop)
+
 		print("##INITIALIZING WITH PDDL")
 		self.ACTS = self.mt.action_list
 		self.PROPS = list(self.mt.proposition_set)
