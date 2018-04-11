@@ -97,9 +97,9 @@ class OracleEnv(Env):
 			else:
 				preconditions[action] = '(and )'
 			if preconditions[action] == '0' or preconditions[action] == '1':
-				print("{}_Precondition: {}".format(action, preconditions[action]))
-				print("{}_has_effect: {}".format(action, bdd2expr(pre_has_effect)))
-				print("{}_no_effect: {}".format(action, bdd2expr(pre_no_effect)))
+				#print("{}_Precondition: {}".format(action, preconditions[action]))
+				#print("{}_has_effect: {}".format(action, bdd2expr(pre_has_effect)))
+				#print("{}_no_effect: {}".format(action, bdd2expr(pre_no_effect)))
 				preconditions[action] = '(and )'
 		return preconditions
 

@@ -54,12 +54,6 @@ env = gym.make('oracle-v0')
 env.setPDDL(DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_list)
 
 state = env.reset()
-
-# for j in range(0, 1):
-#     legal_actions = env.getLegalActions()
-#     act = 'switchon_switch1'
-#     env._step(act)
-
 for j in range(0, 1):
     print(j)
     for i in range(0, 400):
