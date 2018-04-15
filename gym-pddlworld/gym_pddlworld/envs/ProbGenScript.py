@@ -146,6 +146,7 @@ class ProbGen:
     def generate_next_state(self, init_state, rand_act):
         curr_state = copy.deepcopy(init_state)
         action_effects = list()
+
         if self.action_map[rand_act]['precondition_pos'] <= curr_state and len(self.action_map[rand_act]['precondition_neg'] & curr_state) == 0:
             for pred in self.action_map[rand_act]['effect_neg']:
                 if pred in curr_state:
@@ -156,6 +157,7 @@ class ProbGen:
                 action_effects.append(('add', pred))                
         else:
             return None
+        
         return action_effects
 
     def generate(self):
