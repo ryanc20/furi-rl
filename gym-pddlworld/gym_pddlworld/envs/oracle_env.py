@@ -12,7 +12,7 @@ import re
 RL_DIR = os.environ.get('RL_DIR')
 '''
 ENVIRONMENT
-
+ 
 OBSERVATION
 
 ACTIONS
@@ -237,6 +237,8 @@ class OracleEnv(Env):
 			## Perform all the updates to the meta-state
 			for meta_act in meta_updates:
 				self.updateState(meta_act)
+		if done:
+			print("Agent is Done", done)
 		return self._get_obs(), reward, done, {}
 
 	def setPDDL(self, DOMAIN_MOD, PROB, DOM_TEMPL, PROB_TEMPL, PROP_LIST, problem_set):
