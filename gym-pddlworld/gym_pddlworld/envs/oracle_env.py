@@ -31,11 +31,10 @@ class OracleEnv(Env):
 		#self.observation_space = spaces.Tuple((int, int))
 	
 	def generate_sample(self, action):
-		num_props = random.randint(1, len(self.PROPS)) ## number of props to sample
+		num_props = random.randint(0, len(self.PROPS)) ## number of props to sample
 		init_state = set(random.sample(self.PROPS, num_props))
 		#CALL PROB GEN
 		action_effects = self.probGen.generate_next_state(init_state, action)
-
 		return init_state, action_effects
 
 	def format_expr(self, expr):
@@ -60,6 +59,11 @@ class OracleEnv(Env):
 			for prop in self.PROPS:
 				if prop not in obj_state:
 					init_expr = init_expr & ~bddvar(prop)
+		else:
+			init_expr = ~bddvar(self.PROPS[0])
+			for i in range(1, len(self.PROPS)):
+				prop = self.PROPS[i]
+				init_expr = init_expr & ~bddvar(prop)
 		return init_expr
 	
 	def combine_by_disjunction(self, disjuncts):
@@ -82,6 +86,7 @@ class OracleEnv(Env):
 		for action in self.ACTS:
 			pre_has_effect = self.combine_by_disjunction(self.state_pre_has_effect[action])
 			pre_no_effect = self.combine_by_disjunction(self.state_pre_no_effect[action])
+
 			if(pre_has_effect != None):
 				# Case 1: We have data on what works and doesn't work
 				if pre_no_effect != None:
@@ -108,7 +113,7 @@ class OracleEnv(Env):
 
 		# Generate S, A, S' sample		
 		init_state, action_effects = self.generate_sample(action)
-
+		
 		# print("######## ORACLE CALL #############")
 		# print("Init State: ", init_state)
 		# print("Action: ", action)
@@ -178,13 +183,17 @@ class OracleEnv(Env):
 
 		effects = self.getAcceptedRelations(self.state)
 		precons = self.generate_preconditions()
-		for problem in problems:
+		
+		problem_index = 0
+		while numProbsNotSolved == 0 and problem_index < len(problems):
+			problem = problems[problem_index]
 			valid_plan = self.mt.find_plan_and_test(precons, effects, problem)
 			#print("Valid Plan Found: ", valid_plan)
 			if valid_plan:
 				numProbsSolved += 1
 			else:
 				numProbsNotSolved += 1
+			problem_index += 1
 
 		if numProbsSolved >= numProbsNotSolved:
 			reward = 100 * (numProbsSolved)
@@ -252,8 +261,8 @@ class OracleEnv(Env):
 		# 	for condition in self.probGen.action_map[action].keys():
 		# 		if len(self.probGen.action_map[action][condition]) > 0:
 		# 			print(condition.upper())
-		# 			for prop in self.probGen.action_map[action][condition]:
-		# 				print("\t", prop)
+		# 		for prop in self.probGen.action_map[action][condition]:
+		# 			print("\t", prop)
 
 		print("##INITIALIZING WITH PDDL")
 		self.ACTS = self.mt.action_list
@@ -267,11 +276,11 @@ class OracleEnv(Env):
 		if 'dummy' in self.PROPS:
 			self.PROPS.remove('dummy')
 		#self.action_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(len(self.ACTS)), spaces.Discrete(len(self.PROPS)), spaces.Discrete(3)))
-		print("Actions: ", self.ACTS)
-		print("Propositions: ", self.PROPS)
-		print("Goals: ", self.mt.dom_prob.goals())
-		print("Init State: ", self.mt.dom_prob.initialstate())
-		print("##END OF INITIALIZATION")
+		# print("Actions: ", self.ACTS)
+		# print("Propositions: ", self.PROPS)
+		# print("Goals: ", self.mt.dom_prob.goals())
+		# print("Init State: ", self.mt.dom_prob.initialstate())
+		# print("##END OF INITIALIZATION")
 
 	'''
 	Resets the environment to the starting state
